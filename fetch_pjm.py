@@ -130,6 +130,25 @@ def output_data_list():
         print(f"|{l['name']}|*{l['displayName']}* {l['description']}|")
 
 def fetch_paginated_data(url, headers, params=None):
+    if params and params.get('download', '').lower() == 'true':
+        try:
+            response = requests.get(attach_params(url, params), headers=headers)
+            response.raise_for_status()
+            data = response.json()
+            total = response.headers.get('X-TotalRows', '?')
+            logger.info(f"Downloaded {len(data)}/{total} rows")
+            return data
+        except requests.HTTPError as e:
+            response = e.response
+            status = response.status_code if response is not None else "unknown"
+            detail = _extract_error_detail(response)
+            logger.error(f"PJM API returned HTTP {status}: {detail}" if detail
+                         else f"PJM API returned HTTP {status}: {e}")
+            exit(1)
+        except requests.RequestException as e:
+            logger.error(f"Error fetching data: {e}")
+            exit(1)
+
     items = []
     total_rows = None
     retrieved_rows = 0

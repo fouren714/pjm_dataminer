@@ -230,6 +230,33 @@ Add `field=value` for any filterable column in §3. Matches are partial and
 case-insensitive, e.g. `zone=AEP`, `is_verified=TRUE`, `nerc_region=RFC`. Combine
 freely with the date range and generic parameters.
 
+### `download=true` mode
+
+Setting `-F download=true` (or `download=true` on the raw URL) switches the API
+into a single-shot download mode. The response shape changes completely:
+
+| | Normal (paginated) | `download=true` |
+|---|---|---|
+| Body | `{totalRows, items, links}` envelope | Bare JSON array of rows |
+| Total row count | `totalRows` key in body | `X-TotalRows` response header |
+| Pagination | Follow `next` links | Not applicable — all rows returned at once |
+| `rowCount` required? | Yes, with any other parameter | No |
+
+Because there are no `next` links, **all matching rows come back in a single
+response**. This makes `rowCount` and `startRow` **redundant** (though harmless)
+when `download=true` is set alongside them.
+
+[`fetch_pjm.py`](../fetch_pjm.py) detects `download=true` in the params before
+entering the pagination loop, makes a single request, reads the row count from
+`X-TotalRows`, and returns the bare list directly. Passing `-F download=true` via
+the CLI triggers this path automatically — you will see `Downloaded N/M rows` in
+the log output instead of the per-page `Retrieved N/M rows` messages.
+
+Use `download=true` when:
+- You want to skip the `rowCount`/`startRow` requirement for filtered queries.
+- The result set is large and you want one network round-trip.
+- You are piping to an external tool that expects a flat array.
+
 ---
 
 ## 5. Using the CLI (`fetch_pjm.py`)

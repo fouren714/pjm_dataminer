@@ -5,16 +5,23 @@ PJM is a regional transmission organization (RTO) that coordinates the movement 
 
 The fetch_pjm.py script connects to available public apis and outputs in various formats for the convenient population of a data warehouse.
 ```text
-usage: fetch_pjm.py [-h] [--url URL] [--output OUTPUT] [--format FORMAT] [--list] [--version]
+usage: fetch_pjm.py [-h] [--url URL] [--output OUTPUT] [--format FORMAT]
+                    [--list] [--start START] [--end END] [--filter KEY=VALUE]
+                    [--version]
 
 optional arguments:
   -h, --help            show this help message and exit
-  --url URL, -u URL     set url key for data extraction. exp. solar_gen, pnode, etc.
+  --url URL, -u URL     set url key for data extraction, e.g. solar_gen, pnode, etc.
   --output OUTPUT, -o OUTPUT
                         set filename to output
   --format FORMAT, -f FORMAT
-                        set format for output. can by csv, json, xls or stdout.
+                        set output format: csv, json, xls, stdout, or raw.
   --list, -l            output list of all urls
+  --start START, -s START
+                        start of date range, e.g. '2024-01-01' or '2024-01-01 06:00'
+  --end END, -e END     end of date range, e.g. '2024-01-31' or '2024-01-31 23:00'
+  --filter KEY=VALUE, -F KEY=VALUE
+                        feed-specific filter, e.g. zone=AEP or is_verified=TRUE (repeatable)
   --version             show program's version number and exit
 
 
@@ -26,6 +33,13 @@ optional arguments:
 virtualenv venv -p python3
 . ./venv/bin/activate
 pip install -r requirements.txt
+```
+
+### Configure your PJM API key
+Register for a personal subscription key at the [PJM Data Miner developer portal](https://dataminer2.pjm.com), then create a `.env` file in the project root:
+```shell script
+cp .env.example .env
+# edit .env and set PJM_SUBSCRIPTION_KEY to your key
 ```
 ### If you are going to modify this script then take advantage of pre-commit hooks
 ```shell script
@@ -46,7 +60,18 @@ python fetch_pjm.py -u pnode -o pnode.csv
 python fetch_pjm.py -u ops_sum_prev_period
 python fetch_pjm.py -u hrl_load_metered
 python fetch_pjm.py -u solar_gen
+
+# Date range filtering (datetime_beginning_ept)
+python fetch_pjm.py -u hrl_load_metered --start "2024-01-01" --end "2024-01-31"
+python fetch_pjm.py -u hrl_load_metered --start "2024-01-01 00:00" --end "2024-01-01 23:00"
+
+# Feed-specific filters (repeatable)
+python fetch_pjm.py -u hrl_load_metered -F zone=AEP
+python fetch_pjm.py -u hrl_load_metered --start "2024-01-01" --end "2024-01-31" -F zone=AEP -F is_verified=TRUE
 ```
+
+### Available zone values for `hrl_load_metered`
+`AE`, `AEP`, `AP`, `ATSI`, `BC`, `CE`, `DAY`, `DEOK`, `DOM`, `DPL`, `DUQ`, `EKPC`, `JC`, `ME`, `OTHER`, `PE`, `PEP`, `PL`, `PN`, `PS`, `RECO`, `RTO`
 
 
 ### Available URL keys

@@ -1,14 +1,11 @@
-import requests
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def get_subsription_headers():
-    # fetch public subscription key
-    response = requests.get("http://dataminer2.pjm.com/config/settings.json")
-    settings = response.json()
-    key = settings["subscriptionKey"]
-
-    # create header with subscription key
-    headers = {
-        "Ocp-Apim-Subscription-Key": key,
-    }
-    return headers
+    key = os.environ.get("PJM_SUBSCRIPTION_KEY")
+    if not key:
+        raise RuntimeError("PJM_SUBSCRIPTION_KEY environment variable is not set. Add it to your .env file.")
+    return {"Ocp-Apim-Subscription-Key": key}
